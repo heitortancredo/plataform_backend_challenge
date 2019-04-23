@@ -1,8 +1,9 @@
 from flask import Flask
 from flask_restful import Api
 from flask import Blueprint
+import redis
 
-cache = {}
+redisClient = redis.StrictRedis(host='localhost', port=6379, db=0, charset="utf-8", decode_responses=True)
 
 def create_app(config='config.cfg'):
     from app.endpoints import Products
