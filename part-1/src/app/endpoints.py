@@ -1,4 +1,5 @@
 from flask import request
+from flask import current_app
 from flask import Response
 from flask_restful import Resource
 from app import redisClient
@@ -6,6 +7,7 @@ import json
 import xxhash
 
 # cache = {}
+hash_seed = 102938
 
 class Products(Resource):
 
@@ -29,13 +31,18 @@ class Products(Resource):
         xxHash is an extremely fast non-cryptographic hash algorithm, working
         at speeds close to RAM limits. Link: https://cyan4973.github.io/xxHash/
         """
-        dump_hash =  xxhash.xxh64_hexdigest(dump, seed=102938)
+        dump_hash =  xxhash.xxh64_hexdigest(dump, seed=hash_seed)
 
         cached = redisClient.get(dump_hash)
 
         if cached:
             return False
 
-        redisClient.setex(dump_hash, 10*60, 1)  # TTL = 10 min
+        app = current_app
+
+        if not app.testing:
+            redisClient.setex(dump_hash, 10*60, dump_hash)  # TTL = 10 min
+        else:
+            redisClient.setex(dump_hash, 1, dump_hash)  # TTL = 2 secs
 
         return  True
