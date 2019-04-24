@@ -41,8 +41,9 @@ class Products(Resource):
         app = current_app
 
         if not app.testing:
-            redisClient.setex(dump_hash, 10*60, dump_hash)  # TTL = 10 min
+            ttl = 10*60  # 10 min
         else:
-            redisClient.setex(dump_hash, 1, dump_hash)  # TTL = 2 secs
+            ttl = 2  # 2 secs
 
+        redisClient.setex(dump_hash, ttl, dump_hash)
         return  True
