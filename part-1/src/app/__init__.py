@@ -3,6 +3,9 @@ from flask_restful import Api
 from flask import Blueprint
 import redis
 
+
+# FIXME: Get Redis config from os.env or something like that
+
 redisClient = redis.StrictRedis(host='localhost',
                                 port=6379,
                                 db=0,
