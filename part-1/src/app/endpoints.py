@@ -14,8 +14,16 @@ class Products(Resource):
     def post(self):
         data_json = request.get_json()
 
+        status = self.rate_limiter(data_json)
+
+        if not status:
+            return Response("Forbidden", status=403)
+
+        return Response('OK', status=200)
+
+    def rate_limiter(self, data):
         # dump to string to use as hash key
-        dump = json.dumps(data_json, sort_keys=True)
+        dump = json.dumps(data, sort_keys=True)
 
         """
         Uses hash-algorithm because very long keys are not a good idea and the
@@ -23,29 +31,13 @@ class Products(Resource):
         xxHash is an extremely fast non-cryptographic hash algorithm, working
         at speeds close to RAM limits. Link: https://cyan4973.github.io/xxHash/
         """
-        dump =  xxhash.xxh64_hexdigest(dump, seed=102938)
+        dump_hash =  xxhash.xxh64_hexdigest(dump, seed=102938)
 
-        # cached = cache.get(dump)
-
-        # creates one hash for every request because redis only have "expires
-        # feature" for entire hash not for yours items... =(
-        cached = redisClient.hget(dump, dump)
-        now = datetime.utcnow()
+        cached = redisClient.get(dump_hash)
 
         if cached:
-            # Datetime to string - Redis not suport datetime objects
-            cached = datetime.strptime(cached, "%Y-%m-%d %H:%M:%S")
-            diff =  (now - cached).seconds/60
+            return False
 
-            if diff < 10: # 10 minutes
-            # if diff < 1:
-                return Response("Forbidden", status=403)
+        redisClient.setex(dump_hash, 10*60, 1)  # TTL = 10 min
 
-
-        # cache[dump] = now.strftime("%Y-%m-%d %H:%M:%S")
-
-        redisClient.hset(dump, dump, now.strftime("%Y-%m-%d %H:%M:%S"))
-        redisClient.expire(dump, 660)  # TTL = 11 min
-
-        # return jsonify(cache)
-        return jsonify(redisClient.hgetall(dump))
+        return  True
