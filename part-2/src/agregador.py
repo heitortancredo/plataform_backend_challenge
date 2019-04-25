@@ -1,8 +1,6 @@
 import sys
 import json
-import requests
 import time
-from pprint import pprint
 import aiohttp
 import asyncio
 
@@ -11,8 +9,9 @@ class Aggregate:
 
     def __init__(self):
         self.cached = {}
-
         self.http_client = aiohttp.ClientSession()
+        self.n_reqs = 0
+        self.n_cache_access = 0
 
     async def __aenter__(self):
         return self
@@ -66,13 +65,17 @@ class Aggregate:
         valid = False
 
         if url in self.cached:
+            self.n_cache_access += 1
             return self.cached[url]
 
         r = await self.http_client.get(url)
+        self.n_reqs += 1
         if r.status < 300:
             valid = True
         self.cached[url] = valid
         return valid
+
+
 
 async def main():
 
@@ -86,10 +89,13 @@ async def main():
     async with Aggregate() as agg:
         final = await agg.sanitize(file_in)
         agg.dump(final, file_out)
+        print(f"Reqs: {agg.n_reqs}")
+        print(f'Cache access: {agg.n_cache_access}')
 
     end = time.time()
 
     print(f'Elapsed time: {end-start}')
+
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
