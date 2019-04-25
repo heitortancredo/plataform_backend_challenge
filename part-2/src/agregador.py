@@ -19,25 +19,29 @@ class Aggregate:
 
     async def __aexit__(self, *excinfo):
         await self.http_client.close()
+        self.cached = {}
 
-    async def sanitize(self, product_list):
+    async def sanitize(self, file_in):
         result = {}
 
-        for prod in product_list:
-            _id = prod['productId']
-            _img = prod['image']
+        # for prod in product_list:
+        with open(file_in) as fd:
+            for line in fd:
+                prod = json.loads(line.rstrip('\n'))
+                _id = prod['productId']
+                _img = prod['image']
 
-            try:
-                # 3 valid url per product
-                if len(result[_id]) < 3:
+                try:
+                    # 3 valid url per product
+                    if len(result[_id]) < 3:
+                        valid = await self.__check_url(_img)
+                        if valid:
+                            result[_id].append(_img)
+                except KeyError:
                     valid = await self.__check_url(_img)
                     if valid:
+                        result[_id] = []
                         result[_id].append(_img)
-            except KeyError:
-                valid = await self.__check_url(_img)
-                if valid:
-                    result[_id] = []
-                    result[_id].append(_img)
 
         return self.__transforming(result)
 
@@ -77,10 +81,10 @@ async def main():
     file_in = sys.argv[1]
     file_out = sys.argv[2]
 
-    dict_out = [json.loads(line.rstrip('\n')) for line in open(file_in)]
+    # dict_out = [json.loads(line.rstrip('\n')) for line in open(file_in)]
 
     async with Aggregate() as agg:
-        final = await agg.sanitize(dict_out)
+        final = await agg.sanitize(file_in)
         agg.dump(final, file_out)
 
     end = time.time()
