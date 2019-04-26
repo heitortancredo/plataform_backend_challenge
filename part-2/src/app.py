@@ -8,11 +8,6 @@ async def main(file_in, file_out):
 
     start = time.time()
 
-    # file_in = sys.argv[1]
-    # file_out = sys.argv[2]
-
-    # dict_out = [json.loads(line.rstrip('\n')) for line in open(file_in)]
-
     async with Aggregate() as agg:
         final = await agg.sanitize(file_in)
         agg.dump(final, file_out)
