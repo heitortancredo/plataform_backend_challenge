@@ -1,6 +1,4 @@
-import sys
 import json
-import time
 import aiohttp
 import asyncio
 
@@ -9,11 +7,12 @@ class Aggregate:
 
     def __init__(self):
         self.cached = {}
-        self.http_client = aiohttp.ClientSession()
+        self.http_client = None # aiohttp.ClientSession()
         self.n_reqs = 0
         self.n_cache_access = 0
 
     async def __aenter__(self):
+        self.http_client = aiohttp.ClientSession()
         return self
 
     async def __aexit__(self, *excinfo):
@@ -22,7 +21,6 @@ class Aggregate:
 
     async def sanitize(self, file_in):
         result = {}
-
         # for prod in product_list:
         with open(file_in) as fd:
             for line in fd:
@@ -37,9 +35,9 @@ class Aggregate:
                         if valid:
                             result[_id].append(_img)
                 except KeyError:
+                    result[_id] = []
                     valid = await self.__check_url(_img)
                     if valid:
-                        result[_id] = []
                         result[_id].append(_img)
 
         return self.__transforming(result)
@@ -74,29 +72,3 @@ class Aggregate:
             valid = True
         self.cached[url] = valid
         return valid
-
-
-
-async def main():
-
-    start = time.time()
-
-    file_in = sys.argv[1]
-    file_out = sys.argv[2]
-
-    # dict_out = [json.loads(line.rstrip('\n')) for line in open(file_in)]
-
-    async with Aggregate() as agg:
-        final = await agg.sanitize(file_in)
-        agg.dump(final, file_out)
-        print(f"Reqs: {agg.n_reqs}")
-        print(f'Cache access: {agg.n_cache_access}')
-
-    end = time.time()
-
-    print(f'Elapsed time: {end-start}')
-
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
