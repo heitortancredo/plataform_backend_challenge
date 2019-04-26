@@ -21,7 +21,7 @@ class Aggregate:
 
     async def sanitize(self, file_in):
         result = {}
-        # for prod in product_list:
+
         with open(file_in) as fd:
             for line in fd:
                 prod = json.loads(line.rstrip('\n'))
