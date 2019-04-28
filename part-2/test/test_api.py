@@ -1,10 +1,12 @@
 import sys
 import pytest
 from aioresponses import aioresponses
+import os
 
 sys.path.append("../src")
 from url_aggregator import Aggregate
 
+os.environ['TEST_MODE'] = 'true'
 
 @pytest.mark.asyncio
 async def test_sanitize_OK_n_NOK():

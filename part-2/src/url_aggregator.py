@@ -1,6 +1,7 @@
 import json
 import aiohttp
 import asyncio
+import os
 
 
 class Aggregate:
@@ -13,6 +14,7 @@ class Aggregate:
 
     async def __aenter__(self):
         self.http_client = aiohttp.ClientSession()
+
         return self
 
     async def __aexit__(self, *excinfo):
@@ -30,13 +32,16 @@ class Aggregate:
 
                 try:
                     # 3 valid url per product
+
                     if len(result[_id]) < 3:
                         valid = await self.__check_url(_img)
+
                         if valid:
                             result[_id].append(_img)
                 except KeyError:
                     result[_id] = []
                     valid = await self.__check_url(_img)
+
                     if valid:
                         result[_id].append(_img)
 
@@ -64,11 +69,20 @@ class Aggregate:
 
         if url in self.cached:
             self.n_cache_access += 1
+
             return self.cached[url]
 
-        r = await self.http_client.head(url)
+        #  Mockserver dont support HEAD method
+
+        try:
+            if os.environ['TEST_MODE'] == 'true':
+                r = await self.http_client.get(url)
+        except Exception:
+            r = await self.http_client.head(url)
         self.n_reqs += 1
+
         if r.status < 300:
             valid = True
         self.cached[url] = valid
+
         return valid
