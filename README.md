@@ -19,8 +19,8 @@ pip install -r requirements.txt
 - Excecute o servidor: 
 
 		```bash
-python run.py
-```
+        python run.py
+        ```
 
 
 
