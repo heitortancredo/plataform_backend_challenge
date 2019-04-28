@@ -66,7 +66,7 @@ class Aggregate:
             self.n_cache_access += 1
             return self.cached[url]
 
-        r = await self.http_client.get(url)
+        r = await self.http_client.head(url)
         self.n_reqs += 1
         if r.status < 300:
             valid = True
