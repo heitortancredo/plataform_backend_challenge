@@ -14,9 +14,15 @@ pip install -r requirements.txt
 
 ### Executando o servidor
 
-```bash
+ - Passos:
+* Configure o Redis editando o arquivo "part-1/src/app/config.py" (padrao localhost)
+- Excecute o servidor: 
+
+		```bash
 python run.py
 ```
+
+
 
 ### Testes
 
