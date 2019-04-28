@@ -2,13 +2,11 @@ from flask import Flask
 from flask_restful import Api
 from flask import Blueprint
 import redis
+from app import config
 
-
-# FIXME: Get Redis config from os.env or something like that
-
-redisClient = redis.StrictRedis(host='localhost',
-                                port=6379,
-                                db=0,
+redisClient = redis.StrictRedis(host=config.REDIS['HOST'],
+                                port=config.REDIS['PORT'],
+                                db=config.REDIS['DB'],
                                 charset="utf-8",
                                 decode_responses=True)
 
